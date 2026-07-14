@@ -25,7 +25,9 @@ from .models import Listing, Part, Shop
 PROFILE_DIR = Path.home() / ".taobom" / "chrome_profile"
 SEARCH_URL = "https://s.taobao.com/search?q={q}"
 MTOP_MARKERS = ("mtop.relationrecommend", "mtop.taobao.wsearch")
-LOGIN_COOKIES = ("_nk_", "lgc", "cookie2")
+# unb (numeric user id) and _nk_/lgc (nickname) only exist on a real login;
+# cookie2 also appears on anonymous sessions, so it must not count
+LOGIN_COOKIES = ("unb", "_nk_", "lgc")
 
 
 def _launch():
