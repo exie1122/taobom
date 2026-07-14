@@ -42,6 +42,16 @@ def main(argv: list[str] | None = None) -> int:
     p_mock.add_argument("bom")
     p_mock.add_argument("-o", "--output", default="listings.json")
 
+    sub.add_parser("login", help="open Chrome to log into Taobao once (session persists)")
+
+    p_scrape = sub.add_parser("scrape", help="search Taobao for each part -> listings.json (no LLM)")
+    p_scrape.add_argument("bom")
+    p_scrape.add_argument("-o", "--output", default="listings.json")
+    p_scrape.add_argument("--raw-dir", default="raw", help="dump raw API payloads here")
+    p_scrape.add_argument("--per-part", type=int, default=8)
+    p_scrape.add_argument("--delay", type=float, default=6.0,
+                          help="seconds between searches (keep human-slow)")
+
     p_plan = sub.add_parser("plan", help="solve shop consolidation and write the shopping list")
     p_plan.add_argument("bom")
     p_plan.add_argument("listings")
@@ -50,11 +60,16 @@ def main(argv: list[str] | None = None) -> int:
     p_plan.add_argument("--shop-penalty", type=float, default=8.0,
                         help="CNY-equivalent hassle cost per extra shop (default 8)")
 
-    for p in (p_parts, p_mock, p_plan):
+    for p in (p_parts, p_mock, p_scrape, p_plan):
         p.add_argument("--overrides", help="purchase-spec JSON layered over the BOM "
                                            "(exclude / qty / kits / add)")
 
     args = ap.parse_args(argv)
+
+    if args.cmd == "login":
+        from .scrape import login
+        return login()
+
     parts = load_bom(args.bom)
     if args.overrides:
         parts = apply_overrides(parts, json.loads(Path(args.overrides).read_text(encoding="utf-8")))
@@ -71,6 +86,17 @@ def main(argv: list[str] | None = None) -> int:
         shops, listings = mock_listings(parts)
         save_listings(Path(args.output), shops, listings)
         print(f"{len(listings)} mock listings across {len(shops)} shops -> {args.output}")
+        return 0
+
+    if args.cmd == "scrape":
+        from .scrape import scrape
+        shops, listings = scrape(parts, Path(args.raw_dir),
+                                 per_part=args.per_part, delay=args.delay)
+        if not listings:
+            print("no listings scraped — check raw dumps or login state", file=sys.stderr)
+            return 1
+        save_listings(Path(args.output), shops, listings)
+        print(f"{len(listings)} candidate listings across {len(shops)} shops -> {args.output}")
         return 0
 
     if args.cmd == "plan":

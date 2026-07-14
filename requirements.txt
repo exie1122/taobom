@@ -1,1 +1,2 @@
 pulp>=3.0
+playwright>=1.40

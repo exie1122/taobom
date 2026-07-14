@@ -11,10 +11,19 @@ No auto-buying. The output is a checklist a human executes in the Taobao app.
 
 ```
 kicad-cli sch export bom  →  bom.csv
-python -m taobom parts bom.csv                 # inspect parsed parts + search terms
-python -m taobom mock  bom.csv -o listings.json  # fake listings (until scraper exists)
-python -m taobom plan  bom.csv listings.json -o plan.md --max-shops 3
+python -m taobom parts  bom.csv --overrides spec.json   # inspect parsed parts + search terms
+python -m taobom login                                  # one-time Taobao QR login (session persists)
+python -m taobom scrape bom.csv --overrides spec.json -o listings.json
+python -m taobom plan   bom.csv listings.json --overrides spec.json -o plan.md
 ```
+
+`mock` generates fake listings instead of `scrape` for offline testing.
+Scraping runs unattended after the one-time login — no LLM, no tokens:
+Playwright drives your installed Chrome (separate profile in
+`~/.taobom/chrome_profile`), intercepts Taobao's mtop JSON search API,
+and paces requests human-slow. Raw payloads land in `raw/` so extraction
+can be debugged offline. If a captcha appears, solve it in the window and
+press Enter in the terminal.
 
 Export the BOM from KiCad with at least `Reference,Value,Footprint,MPN` fields:
 
@@ -53,9 +62,10 @@ below 0.8 gets a ⚠ human-review flag in the plan.
 ## Roadmap
 
 1. ~~BOM parser + solver + plan output~~ (works, tested on scfyr2 core1106_stereo)
-2. Taobao search/scrape via a real logged-in Chrome session → emits listings.json
-3. SKU-variant matching inside listings (the 规格 dropdown problem) with confidence scores
-4. LCSC baseline tier: fill from LCSC first, Taobao for the leftovers
+2. ~~Overrides layer (exclude/qty/kits/add) for real purchase specs~~
+3. ~~Taobao search scraper (Playwright, persistent login, mtop interception)~~ — built, needs first real run
+4. Item-page pass: lot sizes, SKU-variant matching (the 规格 dropdown), ship fees per shop
+5. LCSC baseline tier: fill from LCSC first, Taobao for the leftovers
 
 ## Test data
 
