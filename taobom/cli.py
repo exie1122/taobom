@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from .bom import load_bom
+from .bom import apply_overrides, load_bom
 from .mock import mock_listings
 from .models import Listing, Shop
 from .output import render_plan
@@ -50,12 +50,20 @@ def main(argv: list[str] | None = None) -> int:
     p_plan.add_argument("--shop-penalty", type=float, default=8.0,
                         help="CNY-equivalent hassle cost per extra shop (default 8)")
 
+    for p in (p_parts, p_mock, p_plan):
+        p.add_argument("--overrides", help="purchase-spec JSON layered over the BOM "
+                                           "(exclude / qty / kits / add)")
+
     args = ap.parse_args(argv)
     parts = load_bom(args.bom)
+    if args.overrides:
+        parts = apply_overrides(parts, json.loads(Path(args.overrides).read_text(encoding="utf-8")))
 
     if args.cmd == "parts":
         for p in parts:
             print(f"{p.qty:>3} x {p.display:<40} {p.footprint}")
+            if p.note:
+                print(f"      note:   {p.note}")
             print(f"      search: {' | '.join(p.search_terms)}")
         return 0
 

@@ -48,146 +48,6 @@
   ],
   "listings": [
     {
-      "part_id": "10uF_0805",
-      "shop_id": "jixin",
-      "title": "贴片电容 0805 全系列 一件20只起售",
-      "url": "https://shop.example/jixin/item/10uF_0805",
-      "price": 1.67,
-      "lot_size": 20,
-      "sku_note": "0805 10uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "10uF_0805",
-      "shop_id": "youxin",
-      "title": "贴片电容 0805 全系列 一件20只起售",
-      "url": "https://shop.example/youxin/item/10uF_0805",
-      "price": 1.41,
-      "lot_size": 20,
-      "sku_note": "0805 10uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "10uF_0805",
-      "shop_id": "hangtai",
-      "title": "贴片电容 0805 全系列 一件20只起售",
-      "url": "https://shop.example/hangtai/item/10uF_0805",
-      "price": 1.35,
-      "lot_size": 20,
-      "sku_note": "0805 10uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "0.1uF_0603",
-      "shop_id": "jixin",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/jixin/item/0.1uF_0603",
-      "price": 1.57,
-      "lot_size": 20,
-      "sku_note": "0603 0.1uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "0.1uF_0603",
-      "shop_id": "youxin",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/youxin/item/0.1uF_0603",
-      "price": 1.37,
-      "lot_size": 20,
-      "sku_note": "0603 0.1uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "0.1uF_0603",
-      "shop_id": "hangtai",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/hangtai/item/0.1uF_0603",
-      "price": 1.42,
-      "lot_size": 20,
-      "sku_note": "0603 0.1uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "SC035HGS_24P_FPC_MODULE",
-      "shop_id": "xinbanfang",
-      "title": "SC035HGS 全局快门摄像头模组 24P FPC 0.5mm",
-      "url": "https://shop.example/xinbanfang/item/SC035HGS_24P_FPC_MODULE",
-      "price": 30.97,
-      "lot_size": 1,
-      "sku_note": "24P 同向 0.5间距",
-      "confidence": 0.7
-    },
-    {
-      "part_id": "SC035HGS_24P_FPC_MODULE",
-      "shop_id": "weishi",
-      "title": "SC035HGS 全局快门摄像头模组 24P FPC 0.5mm",
-      "url": "https://shop.example/weishi/item/SC035HGS_24P_FPC_MODULE",
-      "price": 25.19,
-      "lot_size": 1,
-      "sku_note": "24P 同向 0.5间距",
-      "confidence": 0.7
-    },
-    {
-      "part_id": "4.7k_0603",
-      "shop_id": "jixin",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/jixin/item/4.7k_0603",
-      "price": 1.69,
-      "lot_size": 20,
-      "sku_note": "0603 4.7k",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "4.7k_0603",
-      "shop_id": "youxin",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/youxin/item/4.7k_0603",
-      "price": 1.64,
-      "lot_size": 20,
-      "sku_note": "0603 4.7k",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "4.7k_0603",
-      "shop_id": "hangtai",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/hangtai/item/4.7k_0603",
-      "price": 1.67,
-      "lot_size": 20,
-      "sku_note": "0603 4.7k",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "100k_0603",
-      "shop_id": "jixin",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/jixin/item/100k_0603",
-      "price": 1.52,
-      "lot_size": 20,
-      "sku_note": "0603 100k",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "100k_0603",
-      "shop_id": "youxin",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/youxin/item/100k_0603",
-      "price": 1.49,
-      "lot_size": 20,
-      "sku_note": "0603 100k",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "100k_0603",
-      "shop_id": "hangtai",
-      "title": "贴片电阻 0603 全系列 一件20只起售",
-      "url": "https://shop.example/hangtai/item/100k_0603",
-      "price": 1.35,
-      "lot_size": 20,
-      "sku_note": "0603 100k",
-      "confidence": 1.0
-    },
-    {
       "part_id": "CORE1106G3",
       "shop_id": "xinbanfang",
       "title": "Core1106 SG2002 核心板 RISC-V Linux 开发板",
@@ -218,36 +78,6 @@
       "confidence": 1.0
     },
     {
-      "part_id": "1uF_0603",
-      "shop_id": "jixin",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/jixin/item/1uF_0603",
-      "price": 1.68,
-      "lot_size": 20,
-      "sku_note": "0603 1uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "1uF_0603",
-      "shop_id": "youxin",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/youxin/item/1uF_0603",
-      "price": 1.42,
-      "lot_size": 20,
-      "sku_note": "0603 1uF",
-      "confidence": 1.0
-    },
-    {
-      "part_id": "1uF_0603",
-      "shop_id": "hangtai",
-      "title": "贴片电容 0603 全系列 一件20只起售",
-      "url": "https://shop.example/hangtai/item/1uF_0603",
-      "price": 1.38,
-      "lot_size": 20,
-      "sku_note": "0603 1uF",
-      "confidence": 1.0
-    },
-    {
       "part_id": "XC6206P152_1.5V_SOT_23",
       "shop_id": "jixin",
       "title": "XC6206P152 SOT-23 LDO稳压 (10只)",
@@ -265,6 +95,106 @@
       "price": 2.5,
       "lot_size": 10,
       "sku_note": "XC6206P152",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "cap_kit_0603",
+      "shop_id": "jixin",
+      "title": "0603 贴片电容样品本 常用值全套 每值50只",
+      "url": "https://shop.example/jixin/item/cap_kit_0603",
+      "price": 30.79,
+      "lot_size": 1,
+      "sku_note": "0603 电容本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "cap_kit_0603",
+      "shop_id": "youxin",
+      "title": "0603 贴片电容样品本 常用值全套 每值50只",
+      "url": "https://shop.example/youxin/item/cap_kit_0603",
+      "price": 27.11,
+      "lot_size": 1,
+      "sku_note": "0603 电容本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "cap_kit_0603",
+      "shop_id": "hangtai",
+      "title": "0603 贴片电容样品本 常用值全套 每值50只",
+      "url": "https://shop.example/hangtai/item/cap_kit_0603",
+      "price": 28.07,
+      "lot_size": 1,
+      "sku_note": "0603 电容本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "res_kit_0603",
+      "shop_id": "jixin",
+      "title": "0603 贴片电阻样品本 常用值全套 每值50只",
+      "url": "https://shop.example/jixin/item/res_kit_0603",
+      "price": 31.71,
+      "lot_size": 1,
+      "sku_note": "0603 电阻本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "res_kit_0603",
+      "shop_id": "youxin",
+      "title": "0603 贴片电阻样品本 常用值全套 每值50只",
+      "url": "https://shop.example/youxin/item/res_kit_0603",
+      "price": 27.02,
+      "lot_size": 1,
+      "sku_note": "0603 电阻本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "res_kit_0603",
+      "shop_id": "hangtai",
+      "title": "0603 贴片电阻样品本 常用值全套 每值50只",
+      "url": "https://shop.example/hangtai/item/res_kit_0603",
+      "price": 27.62,
+      "lot_size": 1,
+      "sku_note": "0603 电阻本",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "FH34SRJ_24S_0.5SH",
+      "shop_id": "youxin",
+      "title": "FH34SRJ-24S-0.5SH 原装广濑 0.5mm 24P 翻盖FPC连接器",
+      "url": "https://shop.example/youxin/item/FH34SRJ_24S_0.5SH",
+      "price": 1.22,
+      "lot_size": 1,
+      "sku_note": "FH34SRJ-24S-0.5SH 24P",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "FH34SRJ_24S_0.5SH",
+      "shop_id": "weishi",
+      "title": "FH34SRJ-24S-0.5SH 原装广濑 0.5mm 24P 翻盖FPC连接器",
+      "url": "https://shop.example/weishi/item/FH34SRJ_24S_0.5SH",
+      "price": 1.38,
+      "lot_size": 1,
+      "sku_note": "FH34SRJ-24S-0.5SH 24P",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "XC6206P182_1.8V_SOT_23",
+      "shop_id": "jixin",
+      "title": "XC6206P182 SOT-23 LDO稳压 (10只)",
+      "url": "https://shop.example/jixin/item/XC6206P182_1.8V_SOT_23",
+      "price": 3.04,
+      "lot_size": 10,
+      "sku_note": "XC6206P182",
+      "confidence": 1.0
+    },
+    {
+      "part_id": "XC6206P182_1.8V_SOT_23",
+      "shop_id": "youxin",
+      "title": "XC6206P182 SOT-23 LDO稳压 (10只)",
+      "url": "https://shop.example/youxin/item/XC6206P182_1.8V_SOT_23",
+      "price": 2.71,
+      "lot_size": 10,
+      "sku_note": "XC6206P182",
       "confidence": 1.0
     }
   ]

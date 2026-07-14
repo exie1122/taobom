@@ -32,6 +32,8 @@ def render_plan(plan: Plan, title: str = "购物清单 / Shopping plan") -> str:
         lines.append("")
         for a in sorted(assigns, key=lambda a: a.part.id):
             lines.append(f"- [ ] **{a.part.display}** × {a.part.qty}")
+            if a.part.note:
+                lines.append(f"      备注: {a.part.note}")
             lines.append(f"      {a.listing.title}")
             if a.listing.sku_note:
                 lines.append(f"      规格选择: **{a.listing.sku_note}**")

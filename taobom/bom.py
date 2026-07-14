@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import re
+import sys
 from pathlib import Path
 
 from .models import Part
@@ -66,6 +67,50 @@ def _search_terms(value: str, package: str, mpn: str) -> list[str]:
     if v and v not in terms:
         terms.append(f"{v} {p}".strip())
     return terms
+
+
+def apply_overrides(parts: list[Part], data: dict) -> list[Part]:
+    """Layer a purchase spec over the raw BOM.
+
+    Overrides JSON sections:
+      exclude: [part_id]            drop parts (already owned / not purchasable)
+      qty:     {part_id: n}         explicit purchase qty (spares, multiple builds)
+      kits:    [{id, value, covers: [part_id], qty, note, search_terms}]
+               replace covered parts with one assortment-kit line
+      add:     [{id, value, qty, mpn?, package?, note?, search_terms?}]
+               parts not in the BOM at all
+    """
+    known = {p.id for p in parts}
+    for section in ("exclude", "qty"):
+        for pid in data.get(section, []):
+            if pid not in known:
+                print(f"warning: overrides {section}: unknown part id '{pid}'", file=sys.stderr)
+
+    excl = set(data.get("exclude", []))
+    parts = [p for p in parts if p.id not in excl]
+
+    for p in parts:
+        if p.id in data.get("qty", {}):
+            p.qty = int(data["qty"][p.id])
+
+    out: list[Part] = []
+    covered: set[str] = set()
+    for k in data.get("kits", []):
+        covered |= set(k.get("covers", []))
+        out.append(Part(
+            id=k["id"], refs=list(k.get("covers", [])), value=k["value"],
+            footprint="", qty=int(k.get("qty", 1)), package=k.get("package", ""),
+            search_terms=list(k.get("search_terms", [])), note=k.get("note", ""),
+        ))
+    parts = [p for p in parts if p.id not in covered]
+
+    for a in data.get("add", []):
+        out.append(Part(
+            id=a["id"], refs=[], value=a["value"], footprint="",
+            qty=int(a["qty"]), mpn=a.get("mpn", ""), package=a.get("package", ""),
+            search_terms=list(a.get("search_terms", [])), note=a.get("note", ""),
+        ))
+    return parts + out
 
 
 def load_bom(path: str | Path) -> list[Part]:

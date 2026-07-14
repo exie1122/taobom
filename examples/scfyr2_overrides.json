@@ -1,0 +1,45 @@
+{
+  "exclude": ["SC035HGS_24P_FPC_MODULE", "PWR_IN_5V"],
+  "qty": {
+    "CORE1106G3": 2,
+    "XC6206P282_2.8V_SOT_23": 5,
+    "XC6206P152_1.5V_SOT_23": 5
+  },
+  "add": [
+    {
+      "id": "FH34SRJ_24S_0.5SH",
+      "value": "FH34SRJ-24S-0.5SH",
+      "mpn": "FH34SRJ-24S-0.5SH",
+      "package": "FPC 24P 0.5mm",
+      "qty": 10,
+      "note": "J_CAM_L/R 相机FPC座 — 易焊坏, 多备",
+      "search_terms": ["FH34SRJ-24S-0.5SH", "广濑 0.5mm 24P FPC连接器 翻盖"]
+    },
+    {
+      "id": "XC6206P182_1.8V_SOT_23",
+      "value": "XC6206P182 1.8V",
+      "package": "SOT-23",
+      "qty": 5,
+      "note": "DOVDD LDO (不在原理图BOM里)",
+      "search_terms": ["XC6206P182", "662K 1.8V SOT-23"]
+    }
+  ],
+  "kits": [
+    {
+      "id": "cap_kit_0603",
+      "value": "0603电容样品本",
+      "qty": 1,
+      "covers": ["0.1uF_0603", "1uF_0603", "10uF_0805"],
+      "note": "每板需: 0.1uF x6, 1uF x3, 10uF x1 (10uF是0805, 确认本子里有或单买)",
+      "search_terms": ["0603 贴片电容 样品本 全套"]
+    },
+    {
+      "id": "res_kit_0603",
+      "value": "0603电阻样品本",
+      "qty": 1,
+      "covers": ["4.7k_0603", "100k_0603"],
+      "note": "每板需: 4.7k x4, 100k x2",
+      "search_terms": ["0603 贴片电阻 样品本 全套"]
+    }
+  ]
+}

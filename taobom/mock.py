@@ -72,5 +72,24 @@ def mock_listings(parts: list[Part]) -> tuple[list[Shop], list[Listing]]:
                     sku_note="24P 同向 0.5间距",
                     confidence=0.7,
                 ))
+        elif "FH34" in (p.mpn + p.value).upper():
+            for shop in (SHOPS[1], SHOPS[4]):
+                listings.append(Listing(
+                    part_id=p.id, shop_id=shop.id,
+                    title="FH34SRJ-24S-0.5SH 原装广濑 0.5mm 24P 翻盖FPC连接器",
+                    url=f"{shop.url}/item/{p.id}",
+                    price=_jitter(p.id + shop.id, 1.4), lot_size=1,
+                    sku_note="FH34SRJ-24S-0.5SH 24P",
+                ))
+        elif "样品本" in p.value or "kit" in p.id.lower():
+            kw = "电容" if "电容" in p.value or "cap" in p.id.lower() else "电阻"
+            for shop in (SHOPS[0], SHOPS[1], SHOPS[2]):
+                listings.append(Listing(
+                    part_id=p.id, shop_id=shop.id,
+                    title=f"0603 贴片{kw}样品本 常用值全套 每值50只",
+                    url=f"{shop.url}/item/{p.id}",
+                    price=_jitter(p.id + shop.id, 28.0), lot_size=1,
+                    sku_note=f"0603 {kw}本",
+                ))
         # anything else: no listing -> exercises the unmatched path
     return SHOPS, listings

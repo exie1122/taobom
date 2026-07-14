@@ -16,6 +16,7 @@ class Part:
     mpn: str = ""
     package: str = ""           # extracted: 0603, 0805, SOT-23, ...
     search_terms: list[str] = field(default_factory=list)
+    note: str = ""              # free-form buyer note (spares, per-board needs)
 
     @property
     def display(self) -> str:
