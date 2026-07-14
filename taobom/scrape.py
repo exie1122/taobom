@@ -125,6 +125,16 @@ def _extract_items(payload: dict) -> list[dict]:
     return out
 
 
+def _token_variants(tok: str) -> set[str]:
+    """'CORE1106G3' also matches titles saying just 'Core1106' — vendors drop
+    short trailing revision suffixes after the numeric body."""
+    out = {tok}
+    m = re.fullmatch(r"([A-Z]*\d{3,})[A-Z0-9]{1,3}", tok)
+    if m:
+        out.add(m.group(1))
+    return out
+
+
 def _score(part: Part, title: str) -> float:
     """Cheap lexical match confidence, 0..1. No LLM: MPN hit is decisive,
     otherwise fraction of search-term tokens present in the title."""
@@ -136,8 +146,8 @@ def _score(part: Part, title: str) -> float:
         tokens = [tok for tok in re.split(r"\s+", term.upper()) if tok]
         if not tokens:
             continue
-        hit = sum(1 for tok in tokens if tok in t) / len(tokens)
-        best = max(best, hit)
+        hit = sum(1 for tok in tokens if any(v in t for v in _token_variants(tok)))
+        best = max(best, hit / len(tokens))
     return round(0.9 * best, 2)  # never claim 1.0 without an MPN hit
 
 
@@ -197,6 +207,13 @@ def scrape(
 
             scored = [(it, _score(part, it["title"])) for it in items]
             scored = [x for x in scored if x[1] >= min_confidence and x[0]["shop"]]
+            # drop ¥0.01-style placeholder listings: far below the median price
+            # of plausible candidates for the same part
+            prices = sorted(x[0]["price"] for x in scored)
+            if prices:
+                median = prices[len(prices) // 2]
+                if median >= 5:
+                    scored = [x for x in scored if x[0]["price"] >= 0.08 * median]
             scored.sort(key=lambda x: (-x[1], x[0]["price"]))
             for it, conf in scored[:per_part]:
                 sid = _shop_slug(it["shop"])

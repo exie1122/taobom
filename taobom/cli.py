@@ -59,6 +59,9 @@ def main(argv: list[str] | None = None) -> int:
     p_plan.add_argument("--max-shops", type=int, default=5)
     p_plan.add_argument("--shop-penalty", type=float, default=8.0,
                         help="CNY-equivalent hassle cost per extra shop (default 8)")
+    p_plan.add_argument("--risk-weight", type=float, default=15.0,
+                        help="CNY penalty at 0%% match confidence; steers the solver "
+                             "toward trusted listings (default 15)")
 
     for p in (p_parts, p_mock, p_scrape, p_plan):
         p.add_argument("--overrides", help="purchase-spec JSON layered over the BOM "
@@ -103,7 +106,8 @@ def main(argv: list[str] | None = None) -> int:
         shops, listings = load_listings(Path(args.listings))
         try:
             plan = solve(parts, shops, listings,
-                         max_shops=args.max_shops, shop_penalty=args.shop_penalty)
+                         max_shops=args.max_shops, shop_penalty=args.shop_penalty,
+                         risk_weight=args.risk_weight)
         except RuntimeError as e:
             print(f"error: {e}", file=sys.stderr)
             return 1

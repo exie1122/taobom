@@ -18,6 +18,7 @@ def solve(
     listings: list[Listing],
     max_shops: int = 5,
     shop_penalty: float = 8.0,
+    risk_weight: float = 15.0,
 ) -> Plan:
     by_part: dict[str, list[Listing]] = {}
     for lst in listings:
@@ -27,11 +28,17 @@ def solve(
     unmatched = [p for p in parts if not by_part.get(p.id)]
 
     try:
-        assignments = _solve_ilp(matched, shops, by_part, max_shops, shop_penalty)
+        assignments = _solve_ilp(matched, shops, by_part, max_shops, shop_penalty, risk_weight)
     except ImportError:
-        assignments = _solve_greedy(matched, shops, by_part, max_shops, shop_penalty)
+        assignments = _solve_greedy(matched, shops, by_part, max_shops, shop_penalty, risk_weight)
 
     return Plan(shops=shops, assignments=assignments, unmatched=unmatched)
+
+
+def _eff_cost(lst: Listing, qty: int, risk_weight: float) -> float:
+    """Objective cost: real price plus a penalty for uncertain matches, so a
+    ¥0.5 listing at 45% confidence doesn't beat a ¥20 one at 90%."""
+    return lst.cost_for(qty) + (1.0 - lst.confidence) * risk_weight
 
 
 def _solve_ilp(
@@ -40,6 +47,7 @@ def _solve_ilp(
     by_part: dict[str, list[Listing]],
     max_shops: int,
     shop_penalty: float,
+    risk_weight: float,
 ) -> list[Assignment]:
     import pulp
 
@@ -54,7 +62,7 @@ def _solve_ilp(
     used_shops = {s: pulp.LpVariable(f"y_{s}", cat="Binary") for s in shops}
 
     part_cost = pulp.lpSum(
-        x[(p.id, i)] * by_part[p.id][i].cost_for(p.qty)
+        x[(p.id, i)] * _eff_cost(by_part[p.id][i], p.qty, risk_weight)
         for p in parts
         for i in range(len(by_part[p.id]))
     )
@@ -97,6 +105,7 @@ def _solve_greedy(
     by_part: dict[str, list[Listing]],
     max_shops: int,
     shop_penalty: float,
+    risk_weight: float,
 ) -> list[Assignment]:
     """Repeatedly open the shop with the best (coverage / marginal cost) ratio."""
     remaining = {p.id: p for p in parts}
@@ -111,9 +120,9 @@ def _solve_greedy(
             for pid, p in remaining.items():
                 offers = [l for l in by_part[pid] if l.shop_id == sid]
                 if offers:
-                    best = min(offers, key=lambda l: l.cost_for(p.qty))
+                    best = min(offers, key=lambda l: _eff_cost(l, p.qty, risk_weight))
                     picks[pid] = best
-                    cost += best.cost_for(p.qty)
+                    cost += _eff_cost(best, p.qty, risk_weight)
             if not picks:
                 continue
             if sid not in open_shops and len(open_shops) >= max_shops:

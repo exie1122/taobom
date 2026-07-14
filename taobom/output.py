@@ -12,6 +12,8 @@ def render_plan(plan: Plan, title: str = "购物清单 / Shopping plan") -> str:
         f"总计约 ¥{plan.total:.2f}**"
     )
     lines.append("")
+    lines.append("价格为搜索页起价, 实际以商品页所选规格为准。")
+    lines.append("")
 
     for n, (shop_id, assigns) in enumerate(
         sorted(by_shop.items(), key=lambda kv: -plan.shop_subtotal(kv[0])), start=1

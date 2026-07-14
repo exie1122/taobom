@@ -75,13 +75,14 @@ def apply_overrides(parts: list[Part], data: dict) -> list[Part]:
     Overrides JSON sections:
       exclude: [part_id]            drop parts (already owned / not purchasable)
       qty:     {part_id: n}         explicit purchase qty (spares, multiple builds)
+      search:  {part_id: [terms]}   replace auto-generated Taobao search terms
       kits:    [{id, value, covers: [part_id], qty, note, search_terms}]
                replace covered parts with one assortment-kit line
       add:     [{id, value, qty, mpn?, package?, note?, search_terms?}]
                parts not in the BOM at all
     """
     known = {p.id for p in parts}
-    for section in ("exclude", "qty"):
+    for section in ("exclude", "qty", "search"):
         for pid in data.get(section, []):
             if pid not in known:
                 print(f"warning: overrides {section}: unknown part id '{pid}'", file=sys.stderr)
@@ -92,6 +93,8 @@ def apply_overrides(parts: list[Part], data: dict) -> list[Part]:
     for p in parts:
         if p.id in data.get("qty", {}):
             p.qty = int(data["qty"][p.id])
+        if p.id in data.get("search", {}):
+            p.search_terms = list(data["search"][p.id])
 
     out: list[Part] = []
     covered: set[str] = set()

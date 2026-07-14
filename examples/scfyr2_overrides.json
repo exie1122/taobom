@@ -5,6 +5,9 @@
     "XC6206P282_2.8V_SOT_23": 5,
     "XC6206P152_1.5V_SOT_23": 5
   },
+  "search": {
+    "CORE1106G3": ["幸狐 Core1106 核心板", "Luckfox Core1106"]
+  },
   "add": [
     {
       "id": "FH34SRJ_24S_0.5SH",
