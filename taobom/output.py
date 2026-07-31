@@ -1,4 +1,4 @@
-"""Render a Plan as a per-shop shopping checklist (markdown, WeChat-friendly)."""
+"""Render purchasing plans as Markdown checklists."""
 from __future__ import annotations
 
 from .models import Plan
@@ -12,7 +12,7 @@ def render_plan(plan: Plan, title: str = "购物清单 / Shopping plan") -> str:
         f"总计约 ¥{plan.total:.2f}**"
     )
     lines.append("")
-    lines.append("价格为搜索页起价, 实际以商品页所选规格为准。")
+    lines.append("未核验项目使用搜索页起价；实际以商品页所选规格为准。")
     lines.append("")
 
     for n, (shop_id, assigns) in enumerate(
@@ -39,17 +39,31 @@ def render_plan(plan: Plan, title: str = "购物清单 / Shopping plan") -> str:
             lines.append(f"      {a.listing.title}")
             if a.listing.sku_note:
                 lines.append(f"      规格选择: **{a.listing.sku_note}**")
+            if not a.listing.verified:
+                lines.append("      [待核验] 规格未核验，打开商品页确认具体选项和价格")
+            else:
+                lines.append("      [已核验] 商品页规格、价格和包装数量已人工核验")
             lot = (
                 f"{a.lots} 件 (每件 {a.listing.lot_size} 个)"
                 if a.listing.lot_size > 1
                 else f"{a.lots} 个"
             )
             lines.append(f"      买 {lot} = ¥{a.cost:.2f}")
+            units = a.listing.units_for(a.part.qty)
+            if units > a.part.qty:
+                lines.append(
+                    f"      实得 {units} 个 · 余量 {units - a.part.qty} 个 · "
+                    f"有效单价 ¥{a.cost / units:.4f}"
+                )
             if a.listing.url:
                 lines.append(f"      {a.listing.url}")
+            if a.listing.source_query:
+                lines.append(f"      搜索词: {a.listing.source_query}")
+            if a.listing.match_reasons:
+                lines.append(f"      匹配依据: {', '.join(a.listing.match_reasons)}")
             if a.listing.confidence < 0.8:
                 lines.append(
-                    f"      ⚠ 匹配置信度 {a.listing.confidence:.0%} — 请人工确认"
+                    f"      [待确认] 匹配置信度 {a.listing.confidence:.0%}"
                 )
         ship_note = f" + 运费 ¥{ship:.2f}" if ship else " · 包邮"
         lines.append("")
@@ -57,7 +71,7 @@ def render_plan(plan: Plan, title: str = "购物清单 / Shopping plan") -> str:
         lines.append("")
 
     if plan.unmatched:
-        lines.append("## ⚠ 未找到货源 (needs manual sourcing)")
+        lines.append("## 未找到货源 (needs manual sourcing)")
         lines.append("")
         for p in plan.unmatched:
             lines.append(f"- **{p.display}** × {p.qty} ({', '.join(p.refs)})")
