@@ -20,8 +20,14 @@ def solve(
     shop_penalty: float = 8.0,
     risk_weight: float = 15.0,
 ) -> Plan:
+    if max_shops < 1:
+        raise ValueError("max_shops must be at least 1")
+    if shop_penalty < 0 or risk_weight < 0:
+        raise ValueError("shop_penalty and risk_weight cannot be negative")
     by_part: dict[str, list[Listing]] = {}
     for lst in listings:
+        if lst.shop_id not in shops:
+            raise ValueError(f"listing references unknown shop '{lst.shop_id}'")
         by_part.setdefault(lst.part_id, []).append(lst)
 
     matched = [p for p in parts if by_part.get(p.id)]
@@ -41,6 +47,14 @@ def _eff_cost(lst: Listing, qty: int, risk_weight: float) -> float:
     return lst.cost_for(qty) + (1.0 - lst.confidence) * risk_weight
 
 
+def _shipping_for_subtotal(shop: Shop, subtotal: float) -> float:
+    if shop.ship_fee <= 0:
+        return 0.0
+    if shop.free_ship_over > 0 and subtotal >= shop.free_ship_over:
+        return 0.0
+    return shop.ship_fee
+
+
 def _solve_ilp(
     parts: list[Part],
     shops: dict[str, Shop],
@@ -53,23 +67,44 @@ def _solve_ilp(
 
     prob = pulp.LpProblem("taobom", pulp.LpMinimize)
 
-    # x[(part, idx)] = 1 if part fulfilled by by_part[part.id][idx]
     x = {
         (p.id, i): pulp.LpVariable(f"x_{p.id}_{i}", cat="Binary")
         for p in parts
         for i in range(len(by_part[p.id]))
     }
     used_shops = {s: pulp.LpVariable(f"y_{s}", cat="Binary") for s in shops}
+    subtotals = {
+        sid: pulp.lpSum(
+            x[(p.id, i)] * by_part[p.id][i].cost_for(p.qty)
+            for p in parts
+            for i in range(len(by_part[p.id]))
+            if by_part[p.id][i].shop_id == sid
+        )
+        for sid in shops
+    }
 
     part_cost = pulp.lpSum(
         x[(p.id, i)] * _eff_cost(by_part[p.id][i], p.qty, risk_weight)
         for p in parts
         for i in range(len(by_part[p.id]))
     )
-    # Shipping modeled as worst-case flat fee per used shop (threshold waivers
-    # are recomputed exactly on the final plan; penalty dominates anyway).
-    overhead = pulp.lpSum(
-        used_shops[s] * (shops[s].ship_fee + shop_penalty) for s in shops
+    shipping_terms = []
+    for sid, shop in shops.items():
+        if shop.ship_fee <= 0:
+            continue
+        if shop.free_ship_over <= 0:
+            shipping_terms.append(used_shops[sid] * shop.ship_fee)
+            continue
+        pays_shipping = pulp.LpVariable(f"ship_{sid}", cat="Binary")
+        prob += (
+            subtotals[sid] + shop.free_ship_over * pays_shipping
+            >= shop.free_ship_over * used_shops[sid]
+        )
+        prob += pays_shipping <= used_shops[sid]
+        shipping_terms.append(pays_shipping * shop.ship_fee)
+    overhead = (
+        pulp.lpSum(shipping_terms)
+        + pulp.lpSum(used_shops[s] * shop_penalty for s in shops)
     )
     prob += part_cost + overhead
 
@@ -116,22 +151,29 @@ def _solve_greedy(
         best_shop, best_score, best_picks = None, None, {}
         for sid, shop in shops.items():
             picks = {}
-            cost = 0.0 if sid in open_shops else (shop.ship_fee + shop_penalty)
+            part_cost = 0.0
             for pid, p in remaining.items():
                 offers = [l for l in by_part[pid] if l.shop_id == sid]
                 if offers:
                     best = min(offers, key=lambda l: _eff_cost(l, p.qty, risk_weight))
                     picks[pid] = best
-                    cost += _eff_cost(best, p.qty, risk_weight)
+                    part_cost += _eff_cost(best, p.qty, risk_weight)
             if not picks:
                 continue
             if sid not in open_shops and len(open_shops) >= max_shops:
                 continue
+            real_subtotal = sum(
+                listing.cost_for(remaining[pid].qty)
+                for pid, listing in picks.items()
+            )
+            cost = part_cost + _shipping_for_subtotal(shop, real_subtotal)
+            if sid not in open_shops:
+                cost += shop_penalty
             score = cost / len(picks)
             if best_score is None or score < best_score:
                 best_shop, best_score, best_picks = sid, score, picks
         if best_shop is None:
-            break  # cap reached and open shops cover nothing new
+            break
         open_shops.add(best_shop)
         for pid, lst in best_picks.items():
             chosen[pid] = lst

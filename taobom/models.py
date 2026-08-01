@@ -8,15 +8,15 @@ from dataclasses import dataclass, field
 class Part:
     """One purchasable line item from the BOM (grouped by value+footprint)."""
 
-    id: str                     # stable slug, e.g. "0.1uF_C0603"
-    refs: list[str]             # expanded designators, e.g. ["C2", "C3", ...]
+    id: str
+    refs: list[str]
     value: str
     footprint: str
     qty: int
     mpn: str = ""
-    package: str = ""           # extracted: 0603, 0805, SOT-23, ...
+    package: str = ""
     search_terms: list[str] = field(default_factory=list)
-    note: str = ""              # free-form buyer note (spares, per-board needs)
+    note: str = ""
 
     @property
     def display(self) -> str:
@@ -34,9 +34,9 @@ class Shop:
     name: str
     url: str = ""
     ship_from: str = ""
-    rating: float = 0.0         # 0-5, from shop page
-    free_ship_over: float = 0.0  # CNY threshold for free domestic shipping, 0 = always free
-    ship_fee: float = 0.0       # CNY, charged if subtotal below threshold
+    rating: float = 0.0
+    free_ship_over: float = 0.0
+    ship_fee: float = 0.0
 
 
 @dataclass
@@ -45,20 +45,26 @@ class Listing:
 
     part_id: str
     shop_id: str
-    title: str                  # listing title as shown on Taobao
+    title: str
     url: str = ""
-    price: float = 0.0          # CNY per lot
-    lot_size: int = 1           # units per lot (e.g. 100 for a resistor pack)
-    sku_note: str = ""          # exact variant to pick in the 规格 dropdown
-    confidence: float = 1.0     # 0-1 match confidence (1.0 for mock/manual)
+    price: float = 0.0
+    lot_size: int = 1
+    sku_note: str = ""
+    confidence: float = 1.0
+    source_query: str = ""
+    match_reasons: list[str] = field(default_factory=list)
+    verified: bool = False
 
     def cost_for(self, qty: int) -> float:
         """Total CNY to obtain at least `qty` units."""
-        lots = -(-qty // self.lot_size)  # ceil division
+        lots = -(-qty // self.lot_size)
         return lots * self.price
 
     def lots_for(self, qty: int) -> int:
         return -(-qty // self.lot_size)
+
+    def units_for(self, qty: int) -> int:
+        return self.lots_for(qty) * self.lot_size
 
 
 @dataclass

@@ -2,15 +2,16 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import re
 import sys
+from collections import OrderedDict
+from dataclasses import replace
 from pathlib import Path
 
 from .models import Part
 
-# Footprint substrings that mean "not a purchasable component"
 NON_PURCHASABLE_FOOTPRINT = ("TestPoint", "MountingHole", "Fiducial", "Logo", "NetTie")
-# Reference prefixes that are never purchased
 NON_PURCHASABLE_REF = ("TP", "H", "FID", "MK", "LOGO")
 
 PACKAGE_RE = re.compile(
@@ -60,10 +61,12 @@ def _search_terms(value: str, package: str, mpn: str) -> list[str]:
     if mpn:
         terms.append(mpn)
     v, p = value.strip(), package
-    if re.fullmatch(r"[\d.]+[pnum]?F", v, re.IGNORECASE) and p:
-        terms.append(f"贴片电容 {p} {v}")
-    elif re.fullmatch(r"[\d.]+[kKmM]?(\d+)?", v.replace("Ω", "").replace("R", "")) and p:
-        terms.append(f"贴片电阻 {p} {v}")
+    cap = re.match(r"^([\d.]+[pnum]?F)\b", v, re.IGNORECASE)
+    resistor = re.match(r"^([\d.]+[kKmMrR]?[\d]*)\b", v.replace("Ω", ""))
+    if cap and p:
+        terms.append(f"贴片电容 {p} {cap.group(1)}")
+    elif resistor and p:
+        terms.append(f"贴片电阻 {p} {resistor.group(1)}")
     if v and v not in terms:
         terms.append(f"{v} {p}".strip())
     return terms
@@ -81,65 +84,132 @@ def apply_overrides(parts: list[Part], data: dict) -> list[Part]:
       add:     [{id, value, qty, mpn?, package?, note?, search_terms?}]
                parts not in the BOM at all
     """
+    if not isinstance(data, dict):
+        raise ValueError("overrides must be a JSON object")
     known = {p.id for p in parts}
     for section in ("exclude", "qty", "search"):
-        for pid in data.get(section, []):
+        value = data.get(section, [] if section == "exclude" else {})
+        expected = list if section == "exclude" else dict
+        if not isinstance(value, expected):
+            raise ValueError(f"overrides '{section}' must be a {expected.__name__}")
+        for pid in value:
             if pid not in known:
                 print(f"warning: overrides {section}: unknown part id '{pid}'", file=sys.stderr)
 
     excl = set(data.get("exclude", []))
-    parts = [p for p in parts if p.id not in excl]
+    parts = [replace(p, refs=list(p.refs), search_terms=list(p.search_terms))
+             for p in parts if p.id not in excl]
 
     for p in parts:
         if p.id in data.get("qty", {}):
             p.qty = int(data["qty"][p.id])
+            if p.qty <= 0:
+                raise ValueError(f"override qty for '{p.id}' must be positive")
         if p.id in data.get("search", {}):
-            p.search_terms = list(data["search"][p.id])
+            terms = data["search"][p.id]
+            if not isinstance(terms, list) or not all(isinstance(t, str) and t.strip() for t in terms):
+                raise ValueError(f"override search terms for '{p.id}' must be non-empty strings")
+            p.search_terms = list(terms)
 
     out: list[Part] = []
     covered: set[str] = set()
-    for k in data.get("kits", []):
+    kits = data.get("kits", [])
+    additions = data.get("add", [])
+    if not isinstance(kits, list) or not isinstance(additions, list):
+        raise ValueError("overrides 'kits' and 'add' must be lists")
+    for k in kits:
+        if not isinstance(k, dict) or not k.get("id") or not k.get("value"):
+            raise ValueError("each kit requires non-empty 'id' and 'value'")
+        unknown = set(k.get("covers", [])) - known
+        if unknown:
+            print(f"warning: kit '{k['id']}' covers unknown ids: {', '.join(sorted(unknown))}",
+                  file=sys.stderr)
         covered |= set(k.get("covers", []))
+        qty = int(k.get("qty", 1))
+        if qty <= 0:
+            raise ValueError(f"kit qty for '{k['id']}' must be positive")
         out.append(Part(
             id=k["id"], refs=list(k.get("covers", [])), value=k["value"],
-            footprint="", qty=int(k.get("qty", 1)), package=k.get("package", ""),
+            footprint="", qty=qty, package=k.get("package", ""),
             search_terms=list(k.get("search_terms", [])), note=k.get("note", ""),
         ))
     parts = [p for p in parts if p.id not in covered]
 
-    for a in data.get("add", []):
+    for a in additions:
+        if not isinstance(a, dict) or not a.get("id") or not a.get("value") or "qty" not in a:
+            raise ValueError("each added part requires non-empty 'id', 'value', and 'qty'")
+        qty = int(a["qty"])
+        if qty <= 0:
+            raise ValueError(f"added-part qty for '{a['id']}' must be positive")
         out.append(Part(
             id=a["id"], refs=[], value=a["value"], footprint="",
-            qty=int(a["qty"]), mpn=a.get("mpn", ""), package=a.get("package", ""),
+            qty=qty, mpn=a.get("mpn", ""), package=a.get("package", ""),
             search_terms=list(a.get("search_terms", [])), note=a.get("note", ""),
         ))
-    return parts + out
+    result = parts + out
+    ids = [p.id for p in result]
+    duplicates = sorted({pid for pid in ids if ids.count(pid) > 1})
+    if duplicates:
+        raise ValueError(f"duplicate part ids after overrides: {', '.join(duplicates)}")
+    return result
 
 
 def load_bom(path: str | Path) -> list[Part]:
-    parts: list[Part] = []
+    grouped: OrderedDict[tuple[str, str, str], list[str]] = OrderedDict()
     with open(path, newline="", encoding="utf-8-sig") as f:
-        for row in csv.DictReader(f):
-            refs = _expand_refs(row.get("Reference", ""))
+        reader = csv.DictReader(f)
+        fields = set(reader.fieldnames or [])
+        reference_field = next(
+            (name for name in ("Reference", "Refs", "Designator") if name in fields),
+            None,
+        )
+        value_field = next(
+            (name for name in ("Value", "Comment") if name in fields), None
+        )
+        footprint_field = "Footprint" if "Footprint" in fields else None
+        if not reference_field or not value_field or not footprint_field:
+            expected = (
+                "Reference/Refs/Designator, Value/Comment, and Footprint"
+            )
+            raise ValueError(f"BOM is missing required columns ({expected})")
+        for row_num, row in enumerate(reader, start=2):
+            refs = _expand_refs(row.get(reference_field, ""))
             if not refs:
                 continue
-            footprint = row.get("Footprint", "").strip()
+            footprint = row.get(footprint_field, "").strip()
             if not _is_purchasable(refs, footprint):
                 continue
-            value = row.get("Value", "").strip()
+            value = row.get(value_field, "").strip()
+            if not value:
+                raise ValueError(f"BOM row {row_num} has no Value")
             mpn = row.get("MPN", "").strip()
-            pkg_match = PACKAGE_RE.search(footprint)
-            package = pkg_match.group(1) if pkg_match else ""
-            parts.append(
-                Part(
-                    id=_slug(value, package),
-                    refs=refs,
-                    value=value,
-                    footprint=footprint,
-                    qty=len(refs),
-                    mpn=mpn,
-                    package=package,
-                    search_terms=_search_terms(value, package, mpn),
-                )
-            )
+            key = (value, footprint, mpn)
+            current = grouped.setdefault(key, [])
+            current.extend(ref for ref in refs if ref not in current)
+
+    records: list[tuple[tuple[str, str, str], list[str], str]] = []
+    base_counts: dict[str, int] = {}
+    for key, refs in grouped.items():
+        value, footprint, mpn = key
+        pkg_match = PACKAGE_RE.search(footprint)
+        package = pkg_match.group(1) if pkg_match else ""
+        base = _slug(value, package)
+        records.append((key, refs, package))
+        base_counts[base] = base_counts.get(base, 0) + 1
+
+    parts: list[Part] = []
+    for (value, footprint, mpn), refs, package in records:
+        base = _slug(value, package)
+        if base_counts[base] > 1:
+            digest = hashlib.sha1(
+                f"{value}\0{footprint}\0{mpn}".encode("utf-8")
+            ).hexdigest()[:8]
+            part_id = f"{base}__{digest}"
+        else:
+            part_id = base
+        parts.append(Part(
+            id=part_id, refs=refs, value=value, footprint=footprint,
+            qty=len(refs), mpn=mpn, package=package,
+            search_terms=_search_terms(value, package, mpn),
+        ))
     return parts

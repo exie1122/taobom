@@ -23,9 +23,9 @@ def _jitter(key: str, base: float, spread: float = 0.3) -> float:
 
 
 def _is_passive(p: Part) -> str | None:
-    if re.fullmatch(r"[\d.]+[pnum]?F", p.value, re.IGNORECASE):
+    if re.match(r"^[\d.]+[pnum]?F\b", p.value, re.IGNORECASE):
         return "cap"
-    if re.fullmatch(r"[\d.]+[kKmMrR]?[\d]*(Ω|ohm)?", p.value):
+    if re.match(r"^[\d.]+[kKmMrR]?[\d]*(?:Ω|ohm)?\b", p.value):
         return "res"
     return None
 
@@ -91,5 +91,4 @@ def mock_listings(parts: list[Part]) -> tuple[list[Shop], list[Listing]]:
                     price=_jitter(p.id + shop.id, 28.0), lot_size=1,
                     sku_note=f"0603 {kw}本",
                 ))
-        # anything else: no listing -> exercises the unmatched path
     return SHOPS, listings
