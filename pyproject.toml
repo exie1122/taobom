@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taobom"
+dynamic = ["version"]
+description = "KiCad BOM -> consolidated Taobao purchase plan"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "exie1122" }]
+keywords = ["kicad", "bom", "taobao", "pcb", "electronics", "sourcing"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+]
+dependencies = [
+    "pulp>=3.0,<4",
+    "playwright>=1.40,<2",
+]
+
+[project.optional-dependencies]
+dev = ["build"]
+
+[project.scripts]
+taobom = "taobom.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/exie1122/taobom"
+Issues = "https://github.com/exie1122/taobom/issues"
+
+[tool.setuptools]
+packages = ["taobom"]
+
+[tool.setuptools.dynamic]
+version = { attr = "taobom.__version__" }
