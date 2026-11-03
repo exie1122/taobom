@@ -1,2 +1,2 @@
-pulp>=3.0
-playwright>=1.40
+pulp>=3.0,<4
+playwright>=1.40,<2

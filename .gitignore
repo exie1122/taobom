@@ -1,5 +1,15 @@
 __pycache__/
 *.pyc
 plan.md
+plan.html
+plan.txt
+plan.json
 listings.json
+*.partial
 raw/
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/

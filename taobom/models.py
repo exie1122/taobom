@@ -17,6 +17,7 @@ class Part:
     package: str = ""           # extracted: 0603, 0805, SOT-23, ...
     search_terms: list[str] = field(default_factory=list)
     note: str = ""              # free-form buyer note (spares, per-board needs)
+    lcsc: str = ""              # LCSC / JLC catalogue number, e.g. "C1591"
 
     @property
     def display(self) -> str:
@@ -51,6 +52,13 @@ class Listing:
     lot_size: int = 1           # units per lot (e.g. 100 for a resistor pack)
     sku_note: str = ""          # exact variant to pick in the 规格 dropdown
     confidence: float = 1.0     # 0-1 match confidence (1.0 for mock/manual)
+    # Optional signals the scraper can fill in when Taobao exposes them.
+    sales: int = 0              # units sold, 0 = unknown
+    stock: int = 0              # units in stock, 0 = unknown
+    shop_url: str = ""          # shop front page
+    source_query: str = ""      # search query that produced this listing
+    verified: bool = False      # a human confirmed the variant/price/lot size
+    match_reasons: list[str] = field(default_factory=list)  # why it matched
 
     def cost_for(self, qty: int) -> float:
         """Total CNY to obtain at least `qty` units."""
@@ -78,6 +86,16 @@ class Plan:
     shops: dict[str, Shop]
     assignments: list[Assignment]
     unmatched: list[Part]
+    # Candidate listings that lost to the chosen one, keyed by part id. Used for
+    # the "if it is out of stock" fallback list in the rendered plan.
+    alternatives: dict[str, list[Listing]] = field(default_factory=dict)
+    # Shop-cap bookkeeping: requested_max == 0 means no cap was requested.
+    requested_max_shops: int = 0
+    min_shops_required: int = 0
+    # Cheapest shop able to supply every matched part on its own, if any.
+    single_shop: tuple[str, float] | None = None
+    # "ilp" (optimal) or "greedy" (pulp/CBC unavailable).
+    engine: str = "ilp"
 
     def by_shop(self) -> dict[str, list[Assignment]]:
         out: dict[str, list[Assignment]] = {}
@@ -98,7 +116,19 @@ class Plan:
         return shop.ship_fee
 
     @property
+    def cap_relaxed(self) -> bool:
+        return bool(self.requested_max_shops) and self.min_shops_required > self.requested_max_shops
+
+    @property
     def total(self) -> float:
         parts = sum(a.cost for a in self.assignments)
         ship = sum(self.shop_shipping(s) for s in self.by_shop())
         return parts + ship
+
+    def savings_vs_single_shop(self) -> tuple[str, float] | None:
+        """(shop_id, saving) when a one-shop plan exists and is more expensive."""
+        if not self.single_shop:
+            return None
+        shop_id, cost = self.single_shop
+        saving = cost - self.total
+        return (shop_id, saving) if saving > 0.01 else None
